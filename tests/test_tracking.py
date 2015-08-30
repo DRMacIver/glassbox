@@ -114,3 +114,14 @@ def test_containment():
                 assert x.contained_in(y)
             else:
                 assert not x.contained_in(y)
+
+
+def loopy(n):
+    for i in range(n):
+        pass
+
+
+def test_can_distinguish_number_of_times_through_a_loop():
+    loops = [run_for_labels(loopy, i) for i in range(10)]
+    for i in range(9):
+        assert loops[i] < loops[i+1]
