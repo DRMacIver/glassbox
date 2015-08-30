@@ -150,8 +150,10 @@ prev_tracers = []
 
 def push_array():
     array_state = arr('I')
+    array_state.append(0)
     while len(array_state) < STATE_SIZE:
-        array_state.append(0)
+        array_state.extend(array_state)
+    assert len(array_state) == STATE_SIZE
     arrays.append(array_state)
 
 
