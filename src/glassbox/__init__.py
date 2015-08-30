@@ -64,6 +64,13 @@ def label(a, b):
 
 class Record(object):
     """A record is a structured representation of a program's execution path.
+
+    It maintains a set of counts for each (bucketed) branch executed.
+
+    Records can be compared for equality and ordered. One record being <=
+    another has no particular significance, but is a total ordering compatible
+    with the partial ordering defined by the branches of one record being a
+    subset of the other.
     """
     def __init__(self, data):
         self.data = arr('I', data)
@@ -135,6 +142,8 @@ class Record(object):
         return (self != other) and (self.data > other.data)
 
     def contained_in(self, other):
+        """Returns True if every branch executed in this record is executed at
+        least that many times in the other"""
         return all(
             self.data[i] <= other.data[i] for i in range(len(self.data)))
 
