@@ -16,9 +16,9 @@ collect() call, but it will be suspended until then.
 
 import sys
 from array import array as arr
+import hashlib
 
-
-__all__ = ['begin', 'collect']
+__all__ = ['begin', 'collect', 'Record']
 
 
 def begin():
@@ -40,21 +40,103 @@ def collect():
     seen since the last begin() call"""
     restore = prev_tracers.pop()
     sys.settrace(None)
-    result = set()
-    array_state = arrays.pop()
+    data = arrays.pop()
     for a in arrays:
-        for i in range(len(array_state)):
-            a[i] += array_state[i]
-    for i in range(len(array_state)):
-        if array_state[i]:
-            for t, l in enumerate(levels, 1):
-                if array_state[i] <= l:
-                    result.add(label(i, t))
-                    break
-            else:
-                result.add(label(i, 1 + len(levels)))
+        for i in range(len(data)):
+            a[i] += data[i]
+    result = Record(data)
     sys.settrace(restore)
     return result
+
+
+levels = [1, 2, 3, 4, 8, 16, 32, 128]
+
+
+def label(a, b):
+    for t, l in enumerate(levels, 1):
+        if b <= l:
+            b = t
+            break
+    else:
+        b = 1 + len(levels)
+    return "%d:%d" % (a, b)
+
+
+class Record(object):
+    """A record is a structured representation of a program's execution path.
+    """
+    def __init__(self, data):
+        self.data = arr('I', data)
+        self.counts = {}
+        self.__labels = None
+        self.__identifier = None
+
+    @property
+    def identifier(self):
+        """A unique string identifier that distinguishes two records. Two
+        records are equal if and only if their string identifier is equal.
+
+        There is no other significant meaning assigned to the identifier"""
+        if self.__identifier is None:
+            orig = sys.gettrace()
+            sys.settrace(None)
+            try:
+                hasher = hashlib.sha1()
+                for i in range(len(self.data)):
+                    if self.data[i] > 0:
+                        hasher.update(
+                            ("%d:%d" % (i, self.data[i])).encode('ascii'))
+                self.__identifier = hasher.hexdigest()
+            finally:
+                sys.settrace(orig)
+        return self.__identifier
+
+    @property
+    def labels(self):
+        """
+        Returns a frozenset containing a set of classification labels for this
+        Record. Each label is a string but should not be interpreted as having
+        a significant meaning.
+        """
+        if self.__labels is None:
+            orig = sys.gettrace()
+            sys.settrace(None)
+            try:
+                labels = set()
+                for i in range(len(self.data)):
+                    if self.data[i]:
+                        labels.add(label(i, self.data[i]))
+                self.__labels = frozenset(labels)
+            finally:
+                sys.settrace(orig)
+        return self.__labels
+
+    def __repr__(self):
+        return "Record:%s%r" % (self.identifier, list(self.labels))
+
+    def __eq__(self, other):
+        return isinstance(other, Record) and (
+            self.identifier == other.identifier
+        )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __le__(self, other):
+        return (self == other) or (self.data < other.data)
+
+    def __ge__(self, other):
+        return (self == other) or (self.data > other.data)
+
+    def __lt__(self, other):
+        return (self != other) and (self.data < other.data)
+
+    def __gt__(self, other):
+        return (self != other) and (self.data > other.data)
+
+    def contained_in(self, other):
+        return all(
+            self.data[i] <= other.data[i] for i in range(len(self.data)))
 
 
 STATE_SIZE = 2 ** 16
@@ -97,10 +179,3 @@ def record_state(filename, line):
 def tracer(frame, event, arg):
     record_state(frame.f_code.co_filename, frame.f_lineno)
     return tracer
-
-
-levels = [1, 2, 3, 4, 8, 16, 32, 128]
-
-
-def label(a, b):
-    return "%d:%d" % (a, b)

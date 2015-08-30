@@ -49,6 +49,13 @@ def test_is_stable():
     assert run_for_labels(onebranch, True) == run_for_labels(onebranch, True)
 
 
+def test_distinct_reprs():
+    assert repr(run_for_labels(onebranch, False)) == repr(
+        run_for_labels(onebranch, False))
+    assert repr(run_for_labels(onebranch, False)) != repr(
+        run_for_labels(onebranch, True))
+
+
 def test_detects_branches():
     assert run_for_labels(onebranch, False) != run_for_labels(onebranch, True)
 
@@ -72,26 +79,38 @@ def test_can_be_nested_arbitrarily(f):
     collect()
 
 
-def levels(labels):
-    r = {}
-    for l in labels:
-        a, b = l.split(":")
-        r[a] = int(b)
-    return r
-
-
-def assert_is_contained(x, y):
-    xl = levels(x)
-    yl = levels(y)
-    for x, v in xl.items():
-        assert yl[x] >= v
-
-
 def test_subsumes_child_labels():
     begin()
     a = run_for_labels(onebranch, False)
     b = run_for_labels(onebranch, True)
     assert a != b
     c = collect()
-    assert_is_contained(a, c)
-    assert_is_contained(b, c)
+    assert a.contained_in(c)
+    assert b.contained_in(c)
+
+
+def twobranch(x, y):
+    if x:
+        if y:
+            return 1
+        else:
+            return 2
+    elif y:
+        return 3
+    else:
+        return 4
+
+
+def test_containment():
+    bits = [
+        run_for_labels(twobranch, u, v)
+        for u in [False, True]
+        for v in [False, True]
+    ]
+
+    for x in bits:
+        for y in bits:
+            if x is y:
+                assert x.contained_in(y)
+            else:
+                assert not x.contained_in(y)
