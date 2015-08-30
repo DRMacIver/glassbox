@@ -11,7 +11,7 @@ prev_tracers = []
 
 
 def push_array():
-    array_state = arr('Q')
+    array_state = arr('I')
     while len(array_state) < STATE_SIZE:
         array_state.append(0)
     arrays.append(array_state)
