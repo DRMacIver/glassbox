@@ -20,6 +20,11 @@ import hashlib
 
 __all__ = ['begin', 'collect', 'Record']
 
+if sys.version_info[0] == 2:
+    _range = xrange
+else:
+    _range = range
+
 
 def begin():
     """Start tracking program state.
@@ -42,7 +47,7 @@ def collect():
     sys.settrace(None)
     data = arrays.pop()
     for a in arrays:
-        for i in range(len(data)):
+        for i in _range(len(data)):
             a[i] += data[i]
     result = Record(data)
     sys.settrace(restore)
@@ -89,7 +94,7 @@ class Record(object):
             sys.settrace(None)
             try:
                 hasher = hashlib.sha1()
-                for i in range(len(self.data)):
+                for i in _range(len(self.data)):
                     if self.data[i] > 0:
                         hasher.update(
                             ("%d:%d" % (i, self.data[i])).encode('ascii'))
@@ -110,7 +115,7 @@ class Record(object):
             sys.settrace(None)
             try:
                 labels = set()
-                for i in range(len(self.data)):
+                for i in _range(len(self.data)):
                     if self.data[i]:
                         labels.add(label(i, self.data[i]))
                 self.__labels = frozenset(labels)
@@ -145,7 +150,7 @@ class Record(object):
         """Returns True if every branch executed in this record is executed at
         least that many times in the other"""
         return all(
-            self.data[i] <= other.data[i] for i in range(len(self.data)))
+            self.data[i] <= other.data[i] for i in _range(len(self.data)))
 
 
 STATE_SIZE = 2 ** 16
