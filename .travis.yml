@@ -28,4 +28,4 @@ install:
     - ./scripts/install.sh
 
 script:
-    - ./scripts/run.sh
+    - PATH=$HOME/snakepit:$PATH tox
