@@ -27,10 +27,11 @@ def begin():
     If begin() has previously been called, any labels that occur during this
     execution will also be made visible to previous begin calls.
     """
+    prev_tracers.append(sys.gettrace())
+    sys.settrace(None)
     global prev_state
     prev_state = 0
     push_array()
-    prev_tracers.append(sys.gettrace())
     sys.settrace(tracer)
 
 
