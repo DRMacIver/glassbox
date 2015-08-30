@@ -21,9 +21,7 @@ def countingtrace(frame, event, arg):
 def run_for_labels(f, *args):
     begin()
     f(*args)
-    result = collect()
-    assert sys.gettrace() is None
-    return result
+    return collect()
 
 
 def run_multiple_for_labels(n, f, *args):
@@ -53,12 +51,20 @@ def test_detects_branches():
     assert run_for_labels(onebranch, False) != run_for_labels(onebranch, True)
 
 
-def test_can_be_nested_arbitrarily():
-    base = run_for_labels(onebranch, True)
+testfns = [test_unsets_trace, test_is_stable, test_detects_branches]
+
+
+@pytest.mark.parametrize('f', testfns, ids=[f.__name__ for f in testfns])
+def test_can_be_nested(f):
     begin()
-    assert run_for_labels(onebranch, True) == base
-    run_for_labels(onebranch, False)
-    conclusion = collect()
-    assert base != conclusion
-    assert base.issubset(conclusion)
-    assert run_for_labels(onebranch, False).issubset(conclusion)
+    f()
+    collect()
+
+
+@pytest.mark.parametrize('f', testfns, ids=[f.__name__ for f in testfns])
+def test_can_be_nested_arbitrarily(f):
+    begin()
+    begin()
+    f()
+    collect()
+    collect()
