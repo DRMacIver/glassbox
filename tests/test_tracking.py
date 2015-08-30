@@ -5,8 +5,10 @@ import pytest
 
 @pytest.fixture(autouse=True, scope='function')
 def needs_cleanup(request):
+    original_trace = sys.gettrace()
+
     def cleanup():
-        sys.settrace(None)
+        sys.settrace(original_trace)
     request.addfinalizer(cleanup)
 
 counter = 0
