@@ -86,7 +86,11 @@ def record_state(filename, line):
     curr_state = hash(filename) * 3 + inthash(line)
     global prev_state
     transition = curr_state ^ prev_state
-    arrays[-1][transition & STATE_MASK] += 1
+    # This tracer should never be active when we have an empty stack of
+    # arrays but it seems sometimes CPython gets itself a bit confused and
+    # does it anyway. This is a workaround to that problem.
+    if arrays:
+        arrays[-1][transition & STATE_MASK] += 1
     prev_state = curr_state >> 1
 
 
