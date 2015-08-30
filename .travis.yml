@@ -1,0 +1,31 @@
+language: c
+
+sudo: false
+
+os:
+    - linux
+
+cache:
+    apt: true
+    directories:
+        - $HOME/.pyenv
+        - $HOME/wheelhouse
+
+env:
+    matrix:
+        - TOXENV=pypy-coverage
+        - TOXENV=py26-coverage
+        - TOXENV=py34-coverage
+        - TOXENV=py27-coverage
+        - TOXENV=py33-coverage
+        - TOXENV=pypy-nocoverage
+        - TOXENV=py26-nocoverage
+        - TOXENV=py34-nocoverage
+        - TOXENV=py27-nocoverage
+        - TOXENV=py33-nocoverage
+
+install:
+    - ./scripts/install.sh
+
+script:
+    - ./scripts/run.sh
