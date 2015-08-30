@@ -50,18 +50,25 @@ def begin():
     sys.settrace(tracer)
 
 
+def label(a, b):
+    return "%d:%d" % (a, b)
+
+
 def collect():
     restore = prev_tracers.pop()
     sys.settrace(None)
     result = set()
     array_state = arrays.pop()
+    for a in arrays:
+        for i in range(len(array_state)):
+            a[i] += array_state[i]
     for i in range(len(array_state)):
         if array_state[i]:
             for t, l in enumerate(levels, 1):
                 if array_state[i] <= l:
-                    result.add((i, t))
+                    result.add(label(i, t))
                     break
             else:
-                result.add((i, 1 + len(levels)))
+                result.add(label(i, 1 + len(levels)))
     sys.settrace(restore)
     return result

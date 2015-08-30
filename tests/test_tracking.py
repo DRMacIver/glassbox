@@ -68,3 +68,28 @@ def test_can_be_nested_arbitrarily(f):
     f()
     collect()
     collect()
+
+
+def levels(labels):
+    r = {}
+    for l in labels:
+        a, b = l.split(":")
+        r[a] = int(b)
+    return r
+
+
+def assert_is_contained(x, y):
+    xl = levels(x)
+    yl = levels(y)
+    for x, v in xl.items():
+        assert yl[x] >= v
+
+
+def test_subsumes_child_labels():
+    begin()
+    a = run_for_labels(onebranch, False)
+    b = run_for_labels(onebranch, True)
+    assert a != b
+    c = collect()
+    assert_is_contained(a, c)
+    assert_is_contained(b, c)
