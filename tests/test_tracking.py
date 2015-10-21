@@ -2,6 +2,7 @@ import os
 from glassbox import begin, collect
 import sys
 import pytest
+import platform
 
 
 @pytest.fixture(autouse=True, scope='function')
@@ -129,7 +130,10 @@ def test_can_distinguish_number_of_times_through_a_loop():
 
 
 def test_can_always_build_native_in_test_env():
-    pure_forced = os.getenv('GLASSBOX_FORCE_PURE') == 'true'
+    pure_forced = (
+        os.getenv('GLASSBOX_FORCE_PURE') == 'true' or
+        platform.python_implementation() != 'CPython'
+    )
     from glassbox import native
     assert native == (not pure_forced)
 
