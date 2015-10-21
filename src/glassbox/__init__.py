@@ -15,8 +15,10 @@ collect() call, but it will be suspended until then.
 """
 
 import sys
-from array import array as arr
 import hashlib
+from array import array as arr
+import os
+
 
 __all__ = ['begin', 'collect', 'Record']
 
@@ -25,34 +27,31 @@ if sys.version_info[0] == 2:
 else:
     _range = range
 
+native = False
+
+if os.getenv('GLASSBOX_FORCE_PURE') == 'true':
+    from glassbox.pure import _begin, _collect
+else:
+    try:
+        from glassbox.extension import _begin, _collect
+        native = True
+    except ImportError:
+        from glassbox.pure import _begin, _collect
+
+
+prev_tracers = []
+
 
 def begin():
-    """Start tracking program state.
-
-    If begin() has previously been called, any labels that occur during this
-    execution will also be made visible to previous begin calls.
-    """
     prev_tracers.append(sys.gettrace())
     sys.settrace(None)
-    global prev_state
-    prev_state = 0
-    push_array()
-    sys.settrace(tracer)
+    return _begin()
 
 
 def collect():
-    """Return a set of string labels corresponding to events that have been
-    seen since the last begin() call"""
-    restore = prev_tracers.pop()
-    sys.settrace(None)
-    data = arrays.pop()
-    for a in arrays:
-        for i in _range(len(data)):
-            a[i] += data[i]
-    result = Record(data)
-    sys.settrace(restore)
+    result = Record(_collect())
+    sys.settrace(prev_tracers.pop())
     return result
-
 
 levels = [1, 2, 3, 4, 8, 16, 32, 128]
 
@@ -151,47 +150,3 @@ class Record(object):
         least that many times in the other"""
         return all(
             self.data[i] <= other.data[i] for i in _range(len(self.data)))
-
-
-STATE_SIZE = 2 ** 16
-STATE_MASK = STATE_SIZE - 1
-
-
-arrays = []
-prev_state = 0
-prev_tracers = []
-
-
-def push_array():
-    array_state = arr('I')
-    array_state.append(0)
-    while len(array_state) < STATE_SIZE:
-        array_state.extend(array_state)
-    assert len(array_state) == STATE_SIZE
-    arrays.append(array_state)
-
-
-def inthash(a):
-    a = (a ^ 61) ^ (a >> 16)
-    a = a + (a << 3)
-    a = a ^ (a >> 4)
-    a = a * 0x27d4eb2d
-    a = a ^ (a >> 15)
-    return a
-
-
-def record_state(filename, line):
-    curr_state = hash(filename) * 3 + inthash(line)
-    global prev_state
-    transition = curr_state ^ prev_state
-    # This tracer should never be active when we have an empty stack of
-    # arrays but it seems sometimes CPython gets itself a bit confused and
-    # does it anyway. This is a workaround to that problem.
-    if arrays:
-        arrays[-1][transition & STATE_MASK] += 1
-    prev_state = curr_state >> 1
-
-
-def tracer(frame, event, arg):
-    record_state(frame.f_code.co_filename, frame.f_lineno)
-    return tracer

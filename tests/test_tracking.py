@@ -1,3 +1,4 @@
+import os
 from glassbox import begin, collect
 import sys
 import pytest
@@ -125,3 +126,19 @@ def test_can_distinguish_number_of_times_through_a_loop():
     loops = [run_for_labels(loopy, i) for i in range(10)]
     for i in range(9):
         assert loops[i] < loops[i+1]
+
+
+def test_can_always_build_native_in_test_env():
+    pure_forced = os.getenv('GLASSBOX_FORCE_PURE') == 'true'
+    from glassbox import native
+    assert native == (not pure_forced)
+
+
+def resetthenbranch(x):
+    sys.settrace(sys.gettrace())
+    return onebranch(x)
+
+
+def test_suspending_and_resuming_coverage_does_not_break_tracking():
+    assert run_for_labels(resetthenbranch, False) != \
+        run_for_labels(resetthenbranch, True)

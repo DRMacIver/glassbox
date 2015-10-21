@@ -13,19 +13,42 @@ cache:
 
 env:
     matrix:
-        - TOXENV=pypy-coverage
-        - TOXENV=py26-coverage
-        - TOXENV=py34-coverage
-        - TOXENV=py27-coverage
-        - TOXENV=py33-coverage
-        - TOXENV=pypy-nocoverage
-        - TOXENV=py26-nocoverage
-        - TOXENV=py34-nocoverage
-        - TOXENV=py27-nocoverage
-        - TOXENV=py33-nocoverage
+        - TOXENV=pypy-coverage-cython
+        - TOXENV=py26-coverage-cython
+        - TOXENV=py34-coverage-cython
+        - TOXENV=py27-coverage-cython
+        - TOXENV=py33-coverage-cython
+        - TOXENV=pypy-nocoverage-cython
+        - TOXENV=py26-nocoverage-cython
+        - TOXENV=py34-nocoverage-cython
+        - TOXENV=py27-nocoverage-cython
+        - TOXENV=py33-nocoverage-cython
+        - TOXENV=pypy-coverage-nocython
+        - TOXENV=py26-coverage-nocython
+        - TOXENV=py34-coverage-nocython
+        - TOXENV=py27-coverage-nocython
+        - TOXENV=py33-coverage-nocython
+        - TOXENV=pypy-nocoverage-nocython
+        - TOXENV=py26-nocoverage-nocython
+        - TOXENV=py34-nocoverage-nocython
+        - TOXENV=py27-nocoverage-nocython
+        - TOXENV=py33-nocoverage-nocython
+        - TOXENV=pypy-coverage-pure
+        - TOXENV=py26-coverage-pure
+        - TOXENV=py34-coverage-pure
+        - TOXENV=py27-coverage-pure
+        - TOXENV=py33-coverage-pure
+        - TOXENV=pypy-nocoverage-pure
+        - TOXENV=py26-nocoverage-pure
+        - TOXENV=py34-nocoverage-pure
+        - TOXENV=py27-nocoverage-pure
+        - TOXENV=py33-nocoverage-pure
 
 install:
     - ./scripts/install.sh
 
 script:
     - ./scripts/run.sh
+
+notifications:
+  email: false
