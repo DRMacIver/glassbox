@@ -1,5 +1,6 @@
 import os
 from glassbox import begin, collect
+import pytest
 
 
 def to_int(x):
@@ -19,14 +20,17 @@ def do_hash(data):
 HASHING_DATA = os.urandom(1024 * 10)
 
 
-def test_hashing_while_glassboxed(benchmark):
+@pytest.mark.parametrize('n', range(1, 4))
+def test_hashing_while_glassboxed(benchmark, n):
     @benchmark
     def result():
-        begin()
+        for i in range(n):
+            begin()
         try:
             do_hash(HASHING_DATA)
         finally:
-            collect()
+            for i in range(n):
+                collect()
     assert result is None
 
 

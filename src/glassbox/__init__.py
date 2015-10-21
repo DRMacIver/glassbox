@@ -18,14 +18,10 @@ import sys
 import hashlib
 from array import array as arr
 import os
+from glassbox.compat import _range
 
 
 __all__ = ['begin', 'collect', 'Record']
-
-if sys.version_info[0] == 2:
-    _range = xrange
-else:
-    _range = range
 
 native = False
 
@@ -33,10 +29,10 @@ if os.getenv('GLASSBOX_FORCE_PURE') == 'true':
     from glassbox.pure import _begin, _collect
 else:
     try:
-        from glassbox.extension import _begin, _collect
+        from glassbox.extension import _begin, _collect, _labels
         native = True
     except ImportError:
-        from glassbox.pure import _begin, _collect
+        from glassbox.pure import _begin, _collect, _labels
 
 
 prev_tracers = []
@@ -52,18 +48,6 @@ def collect():
     result = Record(_collect())
     sys.settrace(prev_tracers.pop())
     return result
-
-levels = [1, 2, 3, 4, 8, 16, 32, 128]
-
-
-def label(a, b):
-    for t, l in enumerate(levels, 1):
-        if b <= l:
-            b = t
-            break
-    else:
-        b = 1 + len(levels)
-    return "%d:%d" % (a, b)
 
 
 class Record(object):
@@ -110,16 +94,7 @@ class Record(object):
         a significant meaning.
         """
         if self.__labels is None:
-            orig = sys.gettrace()
-            sys.settrace(None)
-            try:
-                labels = set()
-                for i in _range(len(self.data)):
-                    if self.data[i]:
-                        labels.add(label(i, self.data[i]))
-                self.__labels = frozenset(labels)
-            finally:
-                sys.settrace(orig)
+            self.__labels = frozenset(_labels(self.data))
         return self.__labels
 
     def __repr__(self):

@@ -62,19 +62,17 @@ cdef int tracer(
 
 
 class ProxyTracer(object):
-    def __init__(self):
-        self.called = False
-
     def __call__(self, frame, event, arg):
-        if not self.called:
-            self.called = True
-            if sys.gettrace() is self:
-                record_state(frame.f_code.co_filename, frame.f_lineno)
-                install_tracer()
+        if sys.gettrace() is self:
+            record_state(frame.f_code.co_filename, frame.f_lineno)
+            install_tracer()
+            return self
+
+cdef object proxy_tracer = ProxyTracer()
                 
 
 cdef void install_tracer():
-    PyEval_SetTrace(<Py_tracefunc>tracer, ProxyTracer())
+    PyEval_SetTrace(<Py_tracefunc>tracer, proxy_tracer)
 
 def _begin():
     """Start tracking program state.
@@ -91,10 +89,36 @@ def _begin():
 def _collect():
     """Return a set of string labels corresponding to events that have been
     seen since the last begin() call"""
-    data = arrays.pop()
-    for a in arrays:
-        for i in xrange(len(data)):
-            a[i] += data[i]
+    cdef array.array data = arrays.pop()
+    cdef array.array a
+    for _a in arrays:
+        a = _a
+        for i in xrange(STATE_SIZE):
+            a.data.as_uints[i] += data.data.as_uints[i]
     PyEval_SetTrace(NULL, None)
     return data
 
+cdef unsigned int label(unsigned int a, unsigned int b):
+    if b > 4:
+        if b <= 8:
+            b = 5
+        elif b <= 16:
+            b = 6
+        elif b <= 32:
+            b = 7
+        elif b <= 128:
+            b = 8
+        else:
+            b = 9
+    return (a << 4) + b
+
+
+def _labels(_data):
+    cdef array.array data = <array.array>_data
+    cdef set labels = set()
+    cdef unsigned int v = 0
+    for i in xrange(len(data)):
+        v = data.data.as_uints[i]
+        if v > 0:
+            labels.add(label(i, v))
+    return frozenset(labels)

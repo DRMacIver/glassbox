@@ -1,5 +1,6 @@
 import sys
 from array import array as arr
+from glassbox.compat import _range
 
 
 arrays = []
@@ -72,3 +73,31 @@ def _collect():
         for i in range(len(data)):
             a[i] += data[i]
     return data
+
+
+def label(a, b):
+    if b > 4:
+        if b <= 8:
+            b = 5
+        elif b <= 16:
+            b = 6
+        elif b <= 32:
+            b = 7
+        elif b <= 128:
+            b = 8
+        else:
+            b = 9
+    return (a << 3) + b
+
+
+def _labels(data):
+    orig = sys.gettrace()
+    sys.settrace(None)
+    try:
+        labels = set()
+        for i in _range(len(data)):
+            if data[i]:
+                labels.add(label(i, data[i]))
+        return frozenset(labels)
+    finally:
+        sys.settrace(orig)
