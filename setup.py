@@ -23,7 +23,7 @@ README = local_file("README.rst")
 
 setup_args = dict(
     name='glassbox',
-    version="1.0.0",
+    version="0.1.0",
     author='David R. MacIver',
     author_email='david@drmaciver.com',
     packages=find_packages(SOURCE),
