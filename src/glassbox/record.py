@@ -4,12 +4,9 @@ from glassbox.implementation import merge_arrays, array_contained
 class Record(object):
     """A record is a structured representation of a program's execution path.
 
-    It maintains a set of counts for each (bucketed) branch executed.
-
-    Records can be compared for equality and ordered. One record being <=
-    another has no particular significance, but is a total ordering compatible
-    with the partial ordering defined by the branches of one record being a
-    subset of the other.
+    A record has a set of labels, which may be accessed as record.labels and
+    are a sorted array of unsigned 32-bit integers. Each one corresponds to
+    some interesting observed behaviour.
     """
     def __init__(self, labels):
         self.labels = labels
@@ -35,6 +32,9 @@ class Record(object):
         ))
 
     def contained_in(self, other):
+        """Return True if every behaviour observed by this record is also
+        observed in the other"""
+
         return array_contained(self.labels, other.labels)
 
     def __or__(self, other):
