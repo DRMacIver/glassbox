@@ -121,3 +121,29 @@ def _labels(data):
         return labels
     finally:
         sys.settrace(orig)
+
+
+def merge_arrays(x, y):
+    result = arr('I')
+    xi = 0
+    yi = 0
+    while xi < len(x) and yi < len(y):
+        xv = x[xi]
+        yv = y[yi]
+        if xv < yv:
+            result.append(xv)
+            xi += 1
+        elif xv > yv:
+            result.append(yv)
+            yi += 1
+        else:
+            result.append(xv)
+            xi += 1
+            yi += 1
+    while xi < len(x):
+        result.append(x[xi])
+        xi += 1
+    while yi < len(y):
+        result.append(y[yi])
+        yi += 1
+    return result

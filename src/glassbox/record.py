@@ -1,6 +1,6 @@
 import hashlib
 import sys
-from intset import IntSet
+from glassbox.implementation import merge_arrays
 
 
 class Record(object):
@@ -14,10 +14,7 @@ class Record(object):
     subset of the other.
     """
     def __init__(self, labels):
-        if isinstance(labels, IntSet):
-            self.labels = labels
-        else:
-            self.labels = IntSet(labels)
+        self.labels = labels
         self.__identifier = None
 
     @property
@@ -31,9 +28,8 @@ class Record(object):
             sys.settrace(None)
             try:
                 hasher = hashlib.sha1()
-                for i, j in self.labels.intervals():
-                    hasher.update(str(i))
-                    hasher.update(str(j))
+                for l in self.labels:
+                    hasher.update(str(l))
                 self.__identifier = hasher.hexdigest()
             finally:
                 sys.settrace(orig)
@@ -54,11 +50,53 @@ class Record(object):
         return hash(self.identifier)
 
     def contained_in(self, other):
-        return self.labels.issubset(other.labels)
+        if len(self.labels) > len(other.labels):
+            return False
+        if not self.labels:
+            return True
+        assert other.labels
+        if self.labels[0] < other.labels[0]:
+            return False
+        if self.labels[-1] > other.labels[-1]:
+            return False
+        probe = 0
+        for v in self.labels:
+            o = other.labels[probe]
+            if v == o:
+                probe += 1
+                continue
+            elif v < o:
+                return False
+            assert v > o
+
+            lo = probe
+            hi = len(other.labels) - 1
+            # Invariant: other.labels[lo] < v <= other.labels[hi]
+            while lo + 1 < hi:
+                mid = (lo + hi) // 2
+                o = other.labels[mid]
+                if v <= o:
+                    hi = mid
+                else:
+                    lo = mid
+            if v == other.labels[hi]:
+                probe = hi + 1
+                continue
+            else:
+                return False
+        return True
 
     def __or__(self, other):
         if not isinstance(other, Record):
             raise TypeError("Cannot union Record with %r of type %s" % (
                 other, other.__name__
             ))
-        return Record(self.labels | other.labels)
+
+        if len(other.labels) > len(self.labels):
+            self, other = other, self
+        if other.contained_in(self):
+            return self
+
+        return Record(
+            merge_arrays(self.labels, other.labels)
+        )

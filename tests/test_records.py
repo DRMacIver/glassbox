@@ -47,12 +47,3 @@ def test_union_produces_larger(x, y):
         assert z == x
     if x.contained_in(y):
         assert z == y
-
-
-@given(st.lists(Records, min_size=1))
-def test_union_contains_all(xs):
-    result = xs[0]
-    for x in xs:
-        result |= x
-    for x in xs:
-        assert x.contained_in(result)
