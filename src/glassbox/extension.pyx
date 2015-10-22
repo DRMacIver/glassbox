@@ -158,7 +158,7 @@ def _labels(_data):
 
 
 cdef append_uint(array.array x, unsigned int i):
-    array.extend_buffer(x, <char*>&i, 1)
+    x.append(i)
 
 
 def merge_arrays(_x, _y):
