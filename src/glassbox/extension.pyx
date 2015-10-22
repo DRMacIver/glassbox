@@ -3,17 +3,37 @@ from array import array as arr
 from cpython cimport array
 from cpython.ref cimport PyObject
 
-from cpython.pystate cimport (
-    Py_tracefunc, PyFrameObject,
-    PyTrace_CALL, PyTrace_EXCEPTION, PyTrace_LINE, PyTrace_RETURN,
-    PyTrace_C_CALL, PyTrace_C_EXCEPTION, PyTrace_C_RETURN)
+cdef extern from "Python.h":
 
-cdef extern from *:
+    # We make these an opague types. If the user wants specific attributes,
+    # they can be declared manually.
+
+    ctypedef struct PyInterpreterState:
+        pass
+
+    ctypedef struct PyThreadState:
+        pass
+
+    ctypedef struct PyCodeObject:
+        PyObject *co_filename;
+
+    ctypedef struct PyFrameObject:
+        PyCodeObject *f_code;
+        int f_lineno;
+
+    # This is not actually a struct, but make sure it can never be coerced to
+    # an int or used in arithmetic expressions
+    ctypedef struct PyGILState_STATE
+
+    # The type of the trace function registered using PyEval_SetProfile() and
+    # PyEval_SetTrace().
+    # Py_tracefunc return -1 when raising an exception, or 0 for success.
+    ctypedef int (*Py_tracefunc)(PyObject *, PyFrameObject *, int, PyObject *)
+
     void PyEval_SetTrace(Py_tracefunc cfunc, object obj)
 
 cdef extern from "frameobject.h":
     pass
-
 
 cdef list arrays = []
 
@@ -39,7 +59,7 @@ cdef int inthash(int a):
     return a
 
 
-cdef void record_state(str filename, int line):
+cdef void record_state(object filename, int line):
     cdef int curr_state = hash(filename) * 3 + inthash(line)
     global prev_state
     cdef int transition = curr_state ^ prev_state
@@ -56,8 +76,7 @@ cdef void record_state(str filename, int line):
 cdef int tracer(
     PyObject* _traceobj, PyFrameObject* _frame, int what, PyObject* arg
 ) except -1:
-    frame, traceobj = <object>_frame, <object>_traceobj
-    record_state(frame.f_code.co_filename, frame.f_lineno)
+    record_state(<object>(_frame.f_code.co_filename), _frame.f_lineno)
     return 0
 
 
