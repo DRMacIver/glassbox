@@ -124,9 +124,19 @@ def loopy(n):
 
 
 def test_can_distinguish_number_of_times_through_a_loop():
-    loops = [run_for_labels(loopy, i) for i in range(10)]
-    for i in range(9):
-        assert loops[i] < loops[i+1]
+    loops = [
+        run_for_labels(loopy, 0),
+        run_for_labels(loopy, 1),
+        run_for_labels(loopy, 2),
+        run_for_labels(loopy, 3),
+        run_for_labels(loopy, 10),
+        run_for_labels(loopy, 50),
+        run_for_labels(loopy, 100),
+    ]
+    for i in range(len(loops) - 1):
+        print(i)
+        assert loops[i] != loops[i+1]
+        assert not loops[i + 1].contained_in(loops[i])
 
 
 def test_can_always_build_native_in_test_env():

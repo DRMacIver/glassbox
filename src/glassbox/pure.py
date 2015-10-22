@@ -72,7 +72,7 @@ def _collect():
     for a in arrays:
         for i in range(len(data)):
             a[i] += data[i]
-    return data
+    return _labels(data)
 
 
 def label(a, b):
@@ -87,17 +87,63 @@ def label(a, b):
             b = 8
         else:
             b = 9
-    return (a << 3) + b
+    return (a << 4) + b
 
 
 def _labels(data):
     orig = sys.gettrace()
     sys.settrace(None)
     try:
-        labels = set()
+        labels = arr('I')
         for i in _range(len(data)):
-            if data[i]:
-                labels.add(label(i, data[i]))
-        return frozenset(labels)
+            a = i << 4
+            b = data[i]
+            if b > 0:
+                labels.append(a + 1)
+            if b > 1:
+                labels.append(a + 2)
+            if b > 2:
+                labels.append(a + 3)
+            if b > 3:
+                labels.append(a + 4)
+            if b > 4:
+                labels.append(a + 5)
+            if b > 8:
+                labels.append(b + 6)
+            if b > 16:
+                labels.append(b + 7)
+            if b > 32:
+                labels.append(b + 8)
+            if b > 64:
+                labels.append(b + 9)
+            if b > 128:
+                labels.append(b + 10)
+        return labels
     finally:
         sys.settrace(orig)
+
+
+def merge_arrays(x, y):
+    result = arr('I')
+    xi = 0
+    yi = 0
+    while xi < len(x) and yi < len(y):
+        xv = x[xi]
+        yv = y[yi]
+        if xv < yv:
+            result.append(xv)
+            xi += 1
+        elif xv > yv:
+            result.append(yv)
+            yi += 1
+        else:
+            result.append(xv)
+            xi += 1
+            yi += 1
+    while xi < len(x):
+        result.append(x[xi])
+        xi += 1
+    while yi < len(y):
+        result.append(y[yi])
+        yi += 1
+    return result

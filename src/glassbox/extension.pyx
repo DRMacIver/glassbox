@@ -115,7 +115,7 @@ def _collect():
         for i in xrange(STATE_SIZE):
             a.data.as_uints[i] += data.data.as_uints[i]
     PyEval_SetTrace(NULL, None)
-    return data
+    return _labels(data)
 
 cdef unsigned int label(unsigned int a, unsigned int b):
     if b > 4:
@@ -134,10 +134,64 @@ cdef unsigned int label(unsigned int a, unsigned int b):
 
 def _labels(_data):
     cdef array.array data = <array.array>_data
-    cdef set labels = set()
+    cdef array.array labels = arr('I')
     cdef unsigned int v = 0
     for i in xrange(len(data)):
         v = data.data.as_uints[i]
         if v > 0:
-            labels.add(label(i, v))
-    return frozenset(labels)
+            labels.append(label(i, v))
+    return labels
+
+def _labels(_data):
+    cdef array.array data = <array.array>_data
+    cdef array.array labels = arr('I')
+    for i in xrange(len(data)):
+        a = i << 4
+        b = data[i]
+        if b > 0:
+            labels.append(a + 1)
+        if b > 1:
+            labels.append(a + 2)
+        if b > 2:
+            labels.append(a + 3)
+        if b > 3:
+            labels.append(a + 4)
+        if b > 4:
+            labels.append(a + 5)
+        if b > 8:
+            labels.append(b + 6)
+        if b > 16:
+            labels.append(b + 7)
+        if b > 32:
+            labels.append(b + 8)
+        if b > 64:
+            labels.append(b + 9)
+        if b > 128:
+            labels.append(b + 10)
+    return labels
+
+
+def merge_arrays(x, y):
+    result = arr('I')
+    xi = 0
+    yi = 0
+    while xi < len(x) and yi < len(y):
+        xv = x[xi]
+        yv = y[yi]
+        if xv < yv:
+            result.append(xv)
+            xi += 1
+        elif xv > yv:
+            result.append(yv)
+            yi += 1
+        else:
+            result.append(xv)
+            xi += 1
+            yi += 1
+    while xi < len(x):
+        result.append(x[xi])
+        xi += 1
+    while yi < len(y):
+        result.append(y[yi])
+        yi += 1
+    return result
