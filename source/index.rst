@@ -19,7 +19,7 @@ The intended usage pattern is something along the lines of:
 .. code:: python
 
   def interesting_values(values, run_test):
-      detector = Novelty()
+      detector = NoveltyDetector()
       for value in my_values():
           begin()
           run_test(value)
