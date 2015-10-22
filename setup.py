@@ -52,6 +52,7 @@ setup_args = dict(
     ],
     long_description=open(README).read(),
     tests_require=['pytest', 'coverage'],
+    install_requires=['intset>=1.0.0,<2.0.0'],
     cmdclass={},
 )
 
