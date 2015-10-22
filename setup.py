@@ -6,6 +6,8 @@ from distutils.core import Extension
 from distutils import errors
 import sys
 from distutils.command.build_ext import build_ext
+from setuptools.command.sdist import sdist as _sdist
+
 
 try:
     from Cython.Distutils import build_ext as cython_build_ext
@@ -29,6 +31,7 @@ setup_args = dict(
     packages=find_packages(SOURCE),
     package_dir={"": SOURCE},
     url='https://github.com/DRMacIver/hypothesis',
+    long_description=open("README.rst").read(),
     license='MPL v2',
     description='A library for introspecting program state',
     zip_safe=True,
@@ -50,7 +53,6 @@ setup_args = dict(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Testing",
     ],
-    long_description=open(README).read(),
     tests_require=['pytest', 'coverage'],
     cmdclass={},
 )
@@ -93,9 +95,6 @@ class ve_build_ext(build_ext):
             if "'path'" in str(err):    # works with both py 2/3
                 raise BuildFailed()
             raise
-
-
-from distutils.command.sdist import sdist as _sdist
 
 CYTHON_FILE = "src/glassbox/extension.pyx"
 

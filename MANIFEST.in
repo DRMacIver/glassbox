@@ -1,0 +1,5 @@
+include setup.py README.rst LICENSE.txt
+recursive-include src *.py *.pyx *.c
+recursive-include tests *.py
+include source/*.rst
+include source/conf.py
