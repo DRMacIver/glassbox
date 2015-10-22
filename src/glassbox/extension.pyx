@@ -117,81 +117,166 @@ def _collect():
     PyEval_SetTrace(NULL, None)
     return _labels(data)
 
-cdef unsigned int label(unsigned int a, unsigned int b):
-    if b > 4:
-        if b <= 8:
-            b = 5
-        elif b <= 16:
-            b = 6
-        elif b <= 32:
-            b = 7
-        elif b <= 128:
-            b = 8
-        else:
-            b = 9
-    return (a << 4) + b
-
 
 def _labels(_data):
     cdef array.array data = <array.array>_data
     cdef array.array labels = arr('I')
-    cdef unsigned int v = 0
-    for i in xrange(len(data)):
-        v = data.data.as_uints[i]
-        if v > 0:
-            labels.append(label(i, v))
-    return labels
-
-def _labels(_data):
-    cdef array.array data = <array.array>_data
-    cdef array.array labels = arr('I')
-    for i in xrange(len(data)):
+    cdef unsigned int b
+    cdef unsigned int a
+    cdef unsigned int i
+    cdef unsigned int count = 0
+    cdef unsigned int datalen = len(data)
+    for i in xrange(datalen):
+        if data.data.as_uints[i] > 0:
+            count += 1
+    for i in xrange(datalen):
+        b = data.data.as_uints[i]
+        if b == 0:
+            continue
         a = i << 4
-        b = data[i]
         if b > 0:
-            labels.append(a + 1)
+            append_uint(labels, a + 1)
         if b > 1:
-            labels.append(a + 2)
+            append_uint(labels, a + 2)
         if b > 2:
-            labels.append(a + 3)
+            append_uint(labels, a + 3)
         if b > 3:
-            labels.append(a + 4)
+            append_uint(labels, a + 4)
         if b > 4:
-            labels.append(a + 5)
+            append_uint(labels, a + 5)
         if b > 8:
-            labels.append(b + 6)
+            append_uint(labels, a + 6)
         if b > 16:
-            labels.append(b + 7)
+            append_uint(labels, a + 7)
         if b > 32:
-            labels.append(b + 8)
+            append_uint(labels, a + 8)
         if b > 64:
-            labels.append(b + 9)
+            append_uint(labels, a + 9)
         if b > 128:
-            labels.append(b + 10)
+            append_uint(labels, a + 10)
     return labels
 
 
-def merge_arrays(x, y):
-    result = arr('I')
-    xi = 0
-    yi = 0
-    while xi < len(x) and yi < len(y):
-        xv = x[xi]
-        yv = y[yi]
+cdef append_uint(array.array x, unsigned int i):
+    array.extend_buffer(x, <char*>&i, 1)
+
+
+def merge_arrays(_x, _y):
+    cdef array.array x = _x
+    cdef array.array y = _y
+    cdef array.array result = arr('I')
+    cdef unsigned int xi = 0
+    cdef unsigned int yi = 0
+    cdef unsigned int lx = len(x)
+    cdef unsigned int ly = len(y)
+    cdef unsigned int xv
+    cdef unsigned int yv
+    while xi < lx and yi < ly:
+        xv = x.data.as_uints[xi]
+        yv = y.data.as_uints[yi]
         if xv < yv:
-            result.append(xv)
+            append_uint(result, xv)
             xi += 1
         elif xv > yv:
-            result.append(yv)
+            append_uint(result, yv)
             yi += 1
         else:
-            result.append(xv)
+            append_uint(result, xv)
             xi += 1
             yi += 1
-    while xi < len(x):
-        result.append(x[xi])
+    while xi < lx:
+        append_uint(result, x.data.as_uints[xi])
         xi += 1
-    while yi < len(y):
-        result.append(y[yi])
+    while yi < ly:
+        append_uint(result, y.data.as_uints[yi])
         yi += 1
     return result
+
+cdef object _array_contained(array.array x, array.array y):
+    cdef unsigned int lx = len(x)
+    cdef unsigned int ly = len(y)
+    if lx > ly:
+        return False
+    if lx == 0:
+        return True
+    if x.data.as_uints[0] < y.data.as_uints[0]:
+        return False
+    if x.data.as_uints[lx - 1] > y.data.as_uints[ly - 1]:
+        return False
+    cdef unsigned int probe = 0
+    cdef unsigned int v
+    cdef unsigned int o
+    cdef unsigned int lo
+    cdef unsigned int hi
+    cdef unsigned int mid
+    cdef unsigned int i
+    cdef unsigned int k
+    for k in xrange(lx):
+        v = x.data.as_uints[k]
+        o = y.data.as_uints[probe]
+        if v == o:
+            probe += 1
+            continue
+        elif v < o:
+            return False
+
+        lo = probe
+        i = 0
+        while True:
+            hi = probe + 2 ** i
+            i += 1
+            if hi >= ly:
+                hi = ly - 1
+                break
+            if y.data.as_uints[hi] >= v:
+                break
+            else:
+                lo = hi
+        # Invariant: y[lo] < v <= y[hi]
+        while lo + 1 < hi:
+            mid = (lo + hi) // 2
+            o = y.data.as_uints[mid]
+            if v <= o:
+                hi = mid
+            else:
+                lo = mid
+        if v == y.data.as_uints[hi]:
+            probe = hi + 1
+            continue
+        else:
+            return False
+    return True
+
+def array_contained(x, y):
+    return _array_contained(<array.array>x, <array.array>y)
+
+def merge_into(_x, _y, _scratch):
+    del _scratch[:]
+    cdef array.array x = _x;
+    cdef array.array y = _y;
+    cdef array.array scratch = _scratch;
+    cdef unsigned int xi = 0
+    cdef unsigned int yi = 0
+    cdef unsigned int lx = len(x)
+    cdef unsigned int ly = len(y)
+    cdef unsigned int xv;
+    cdef unsigned int yv;
+    while xi < lx and yi < ly:
+        xv = x.data.as_uints[xi]
+        yv = y.data.as_uints[yi]
+        if xv < yv:
+            append_uint(scratch, xv)
+            xi += 1
+        elif xv > yv:
+            append_uint(scratch, yv)
+            yi += 1
+        else:
+            append_uint(scratch, xv)
+            xi += 1
+            yi += 1
+    while xi < lx:
+        append_uint(scratch, x.data.as_uints[xi])
+        xi += 1
+    while yi < len(y):
+        append_uint(scratch, y.data.as_uints[yi])
+        yi += 1

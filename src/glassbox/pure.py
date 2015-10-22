@@ -109,15 +109,15 @@ def _labels(data):
             if b > 4:
                 labels.append(a + 5)
             if b > 8:
-                labels.append(b + 6)
+                labels.append(a + 6)
             if b > 16:
-                labels.append(b + 7)
+                labels.append(a + 7)
             if b > 32:
-                labels.append(b + 8)
+                labels.append(a + 8)
             if b > 64:
-                labels.append(b + 9)
+                labels.append(a + 9)
             if b > 128:
-                labels.append(b + 10)
+                labels.append(a + 10)
         return labels
     finally:
         sys.settrace(orig)
@@ -147,3 +147,76 @@ def merge_arrays(x, y):
         result.append(y[yi])
         yi += 1
     return result
+
+
+def array_contained(x, y):
+    if len(x) > len(y):
+        return False
+    if not x:
+        return True
+    assert y
+    if x[0] < y[0]:
+        return False
+    if x[-1] > y[-1]:
+        return False
+    probe = 0
+    for v in x:
+        o = y[probe]
+        if v == o:
+            probe += 1
+            continue
+        elif v < o:
+            return False
+        assert v > o
+
+        lo = probe
+        i = 0
+        while True:
+            hi = probe + 2 ** i
+            i += 1
+            if hi >= len(y):
+                hi = len(y) - 1
+                break
+            if y[hi] >= v:
+                break
+            else:
+                lo = hi
+        # Invariant: y[lo] < v <= y[hi]
+        while lo + 1 < hi:
+            mid = (lo + hi) // 2
+            o = y[mid]
+            if v <= o:
+                hi = mid
+            else:
+                lo = mid
+        if v == y[hi]:
+            probe = hi + 1
+            continue
+        else:
+            return False
+    return True
+
+
+def merge_into(x, y, scratch):
+    del scratch[:]
+    xi = 0
+    yi = 0
+    while xi < len(x) and yi < len(y):
+        xv = x[xi]
+        yv = y[yi]
+        if xv < yv:
+            scratch.append(xv)
+            xi += 1
+        elif xv > yv:
+            scratch.append(yv)
+            yi += 1
+        else:
+            scratch.append(xv)
+            xi += 1
+            yi += 1
+    while xi < len(x):
+        scratch.append(x[xi])
+        xi += 1
+    while yi < len(y):
+        scratch.append(y[yi])
+        yi += 1

@@ -17,8 +17,9 @@ collect() call, but it will be suspended until then.
 import sys
 from glassbox.record import Record
 from glassbox.implementation import native, _collect, _begin
+from glassbox.novelty import NoveltyDetector
 
-__all__ = ['begin', 'collect', 'Record', 'native']
+__all__ = ['begin', 'collect', 'Record', 'native', 'NoveltyDetector']
 
 prev_tracers = []
 
