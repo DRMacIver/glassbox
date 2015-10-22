@@ -13,32 +13,32 @@ cache:
 
 env:
     matrix:
-        - TOXENV=pypy-coverage-cython
         - TOXENV=py26-coverage-cython
-        - TOXENV=py34-coverage-cython
-        - TOXENV=py27-coverage-cython
-        - TOXENV=py33-coverage-cython
-        - TOXENV=pypy-nocoverage-cython
-        - TOXENV=py26-nocoverage-cython
-        - TOXENV=py34-nocoverage-cython
-        - TOXENV=py27-nocoverage-cython
-        - TOXENV=py33-nocoverage-cython
-        - TOXENV=pypy-coverage-nocython
         - TOXENV=py26-coverage-nocython
-        - TOXENV=py34-coverage-nocython
-        - TOXENV=py27-coverage-nocython
-        - TOXENV=py33-coverage-nocython
-        - TOXENV=pypy-nocoverage-nocython
+        - TOXENV=py26-nocoverage-cython
         - TOXENV=py26-nocoverage-nocython
-        - TOXENV=py34-nocoverage-nocython
-        - TOXENV=py27-nocoverage-nocython
-        - TOXENV=py33-nocoverage-nocython
-        - TOXENV=pypy-coverage-pure
-        - TOXENV=pypy-nocoverage-pure
         - TOXENV=py26-nocoverage-pure
-        - TOXENV=py34-nocoverage-pure
+        - TOXENV=py27-coverage-cython
+        - TOXENV=py27-coverage-nocython
+        - TOXENV=py27-nocoverage-cython
+        - TOXENV=py27-nocoverage-nocython
         - TOXENV=py27-nocoverage-pure
+        - TOXENV=py33-coverage-cython
+        - TOXENV=py33-coverage-nocython
+        - TOXENV=py33-nocoverage-cython
+        - TOXENV=py33-nocoverage-nocython
         - TOXENV=py33-nocoverage-pure
+        - TOXENV=py34-coverage-cython
+        - TOXENV=py34-coverage-nocython
+        - TOXENV=py34-nocoverage-cython
+        - TOXENV=py34-nocoverage-nocython
+        - TOXENV=py34-nocoverage-pure
+        - TOXENV=pypy-coverage-cython
+        - TOXENV=pypy-coverage-nocython
+        - TOXENV=pypy-coverage-pure
+        - TOXENV=pypy-nocoverage-cython
+        - TOXENV=pypy-nocoverage-nocython
+        - TOXENV=pypy-nocoverage-pure
 
 install:
     - ./scripts/install.sh
