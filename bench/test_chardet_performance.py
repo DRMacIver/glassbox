@@ -16,7 +16,7 @@ def test_detecting_novel_corpus_elements_for_chardet(benchmark):
             novelty.novel(glassbox.collect())
     assert result is None
 
-def test_running_chardet_on_whole_corpus(benchmark):
+def test_running_chardet_on_whole_corpus_without_glassbox(benchmark):
     @benchmark
     def result():
         for c in corpus:
