@@ -10,14 +10,18 @@ prev_state = 0
 STATE_SIZE = 2 ** 16
 STATE_MASK = STATE_SIZE - 1
 
+array_template = None
+
 
 def push_array():
-    array_state = arr('I')
-    array_state.append(0)
-    while len(array_state) < STATE_SIZE:
-        array_state.extend(array_state)
-    assert len(array_state) == STATE_SIZE
-    arrays.append(array_state)
+    global array_template
+    if array_template is None:
+        array_template = arr('I')
+        array_template.append(0)
+        while len(array_template) < STATE_SIZE:
+            array_template.extend(array_template)
+        assert len(array_template) == STATE_SIZE
+    arrays.append(arr('I', array_template))
 
 
 def inthash(a):

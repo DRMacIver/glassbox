@@ -35,19 +35,27 @@ cdef extern from "Python.h":
 cdef extern from "frameobject.h":
     pass
 
-cdef list arrays = []
-
-cdef int prev_state = 0
-
-
 cdef int STATE_SIZE = 2 ** 16
 cdef int STATE_MASK = STATE_SIZE - 1
 
+cdef unsigned int stack_height = 0;
+cdef list arrays = []
+cdef array.array current_array = arr('I')
+array.resize(current_array, STATE_SIZE)
+cdef int prev_state = 0
+
+
+
 cdef push_array():
+    global current_array
+    global stack_height
+    stack_height += 1
     cdef array.array array_state = arr('I')
     array.resize(array_state, STATE_SIZE)
     array.zero(array_state)
     arrays.append(array_state)
+    current_array = array_state
+    current_array = array_state
 
 
 cdef int inthash(int a):
@@ -66,10 +74,9 @@ cdef void record_state(object filename, int line):
     # This tracer should never be active when we have an empty stack of
     # arrays but it seems sometimes CPython gets itself a bit confused and
     # does it anyway. This is a workaround to that problem.
-    if not arrays:
+    if stack_height == 0:
         return
-    cdef array.array target = arrays[-1]
-    target.data.as_uints[transition & STATE_MASK] += 1
+    current_array.data.as_uints[transition & STATE_MASK] += 1
     prev_state = curr_state >> 1
 
 
@@ -108,7 +115,14 @@ def _begin():
 def _collect():
     """Return a set of string labels corresponding to events that have been
     seen since the last begin() call"""
+    global stack_height
+    global current_array
+    assert stack_height > 0
+    stack_height -= 1
     cdef array.array data = arrays.pop()
+    assert len(arrays) == stack_height
+    if stack_height > 0:
+        current_array = arrays[-1]
     cdef array.array a
     for _a in arrays:
         a = _a
