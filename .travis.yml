@@ -33,11 +33,7 @@ env:
         - TOXENV=py34-nocoverage-cython
         - TOXENV=py34-nocoverage-nocython
         - TOXENV=py34-nocoverage-pure
-        - TOXENV=pypy-coverage-cython
-        - TOXENV=pypy-coverage-nocython
         - TOXENV=pypy-coverage-pure
-        - TOXENV=pypy-nocoverage-cython
-        - TOXENV=pypy-nocoverage-nocython
         - TOXENV=pypy-nocoverage-pure
 
 install:
