@@ -11,17 +11,19 @@ STATE_SIZE = 2 ** 16
 STATE_MASK = STATE_SIZE - 1
 
 array_template = None
-
+current_array = None
 
 def push_array():
-    global array_template
+    global array_template, current_array
     if array_template is None:
         array_template = arr('I')
         array_template.append(0)
         while len(array_template) < STATE_SIZE:
             array_template.extend(array_template)
         assert len(array_template) == STATE_SIZE
-    arrays.append(arr('I', array_template))
+    result = arr('I', array_template)
+    current_array = result
+    arrays.append(result)
 
 
 def inthash(a):
@@ -33,20 +35,14 @@ def inthash(a):
     return a
 
 
-def record_state(filename, line):
-    curr_state = hash(filename) * 3 + inthash(line)
-    global prev_state
-    transition = curr_state ^ prev_state
-    # This tracer should never be active when we have an empty stack of
-    # arrays but it seems sometimes CPython gets itself a bit confused and
-    # does it anyway. This is a workaround to that problem.
-    if arrays:
-        arrays[-1][transition & STATE_MASK] += 1
-    prev_state = curr_state >> 1
-
-
 def tracer(frame, event, arg):
-    record_state(frame.f_code.co_filename, frame.f_lineno)
+    global prev_state
+    filename = frame.f_code.co_filename
+    line = frame.f_lineno
+    curr_state = hash(filename) * 3 + inthash(line)
+    transition = curr_state ^ prev_state
+    current_array[transition & STATE_MASK] += 1
+    prev_state = curr_state >> 1
     return tracer
 
 
@@ -68,11 +64,14 @@ def _begin():
 def _collect():
     """Return a set of string labels corresponding to events that have been
     seen since the last begin() call"""
+    global current_array
     t = sys.gettrace()
     assert t is tracer, t
     sys.settrace(None)
     assert sys.gettrace() is None
     data = arrays.pop()
+    if arrays:
+        current_array = arrays[-1]
     for a in arrays:
         for i in range(len(data)):
             a[i] += data[i]
