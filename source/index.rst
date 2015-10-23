@@ -49,3 +49,7 @@ This maintains a current "best" value that exhibits each label.
 
 Note: It would not be a problem if run_test itself used the glassbox API. As long as
 begin/collect calls are kept balanced, it is perfectly safe to nest them.
+
+Warning: Glassbox is not currently thread safe. Your results will be very confusing
+if you try to use it in threaded code. In the long-term it will probably simply
+refuse to run on more than one thread, but right now it will just break weirdly.
